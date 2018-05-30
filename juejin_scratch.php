@@ -10,56 +10,14 @@
 	if (empty($result)) {
 	  return;
 	}
-var_dump($result);
-//	send($result);
-
-
-	function send($data)
-	{
-	  // get cURL resource
-	  $ch = curl_init();
-
-	  // set url
-	  curl_setopt($ch, CURLOPT_URL, 'https://oapi.dingtalk.com/robot/send?access_token=690807c35e5345db0560903e6472d969a3cabc18416174795e4d3007d29210f3');
-
-	  // set method
-	  curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-
-	  // return the transfer as a string
-	  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-	  // set headers
-	  curl_setopt($ch, CURLOPT_HTTPHEADER, [
-		'Content-Type: application/json; charset=utf-8',
-	  ]);
-
-	  // json body
-	  $json_array = [
+	$result = [
 		'feedCard' => [
-		  'links' => $data
+			'links' => $result
 		],
 		'msgtype' => 'feedCard'
-	  ];
-	  $body = json_encode($json_array);
+	];
+	$request->post($result);
 
-	  // set body
-	  curl_setopt($ch, CURLOPT_POST, 1);
-	  curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-
-	  // send the request and save response to $response
-	  $response = curl_exec($ch);
-
-	  // stop if fails
-	  if (!$response) {
-		die('Error: "' . curl_error($ch) . '" - Code: ' . curl_errno($ch));
-	  }
-
-	  // echo 'HTTP Status Code: ' . curl_getinfo($ch, CURLINFO_HTTP_CODE) . PHP_EOL;
-	  // echo 'Response Body: ' . $response . PHP_EOL;
-
-	  // close curl resource to free up system resources
-	  curl_close($ch);
-	}
 
 	function getRecords($sourceData)
 	{
@@ -86,8 +44,8 @@ var_dump($result);
 		  ];
 		array_push($result, $element);
 	  }
-	  if (count($result) > 10) {
-		$result = array_slice($result, 0, 9);
+	  if (count($result) > 6) {
+		$result = array_slice($result, 0, 5);
 	  }
 	  return $result;
 	}
