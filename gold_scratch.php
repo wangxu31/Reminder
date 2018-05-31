@@ -1,7 +1,11 @@
 <?php
 	require 'Request.php';
 
-	$url = 'https://stock.xueqiu.com/v5/stock/realtime/quotec.json?symbol=SZ159937';
+	date_default_timezone_set("Asia/Shanghai");
+	const CODE_MAP = ['SZ159937' => '博时黄金'];
+
+//	$realTimeUrl = 'https://stock.xueqiu.com/v5/stock/realtime/quotec.json?symbol=SZ159937';
+	$url = 'https://stock.xueqiu.com/v5/stock/quote.json?symbol=SZ159937';
 	$headers = [
 		'Accept: application/json, text/plain, */*',
 		'Accept-Encoding: gzip, deflate, br',
@@ -12,29 +16,38 @@
 		'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,mt;q=0.7',
 	];
 	$request = new Request();
-	$response = $request->get($url, $headers);
+//	if (date('H:i:s') >= '09:00:00' && date('H:i:s') <= '15:00:00') {
+//		$response = $request->get($realTimeUrl, $headers);
+//	} else {
+		$response = $request->get($url, $headers);
+//	}
+
 	$response = gzdecode($response);
 	$data = json_decode($response, true);
 	$data = $data['data'];
 	$content = '';
 	if (isset($data['market']) && isset($data['quote'])) {
+		$status = $data['market']['status'];
+		$name = $data['quote']['name'];
 		$high = $data['quote']['high'];
 		$low = $data['quote']['low'];
 		$percent = $data['quote']['percent'];
 		$open = $data['quote']['open'];
 		$lastClose = $data['quote']['last_close'];
 		$current = $data['quote']['current'];
-		$content = sprintf('今日开盘价%s，收盘价%s，最高%s，最低%s，涨跌幅%s，昨日收盘价%s。', $open, $current, $high, $low, $percent, $lastClose);
+		$content = sprintf("%s【%s】%s 开盘价%s，收盘价%s，最高%s，最低%s，涨跌幅%s%%，昨日收盘价%s。", date('Y-m-d'), $status, $name, $open, $current, $high, $low, $percent, $lastClose);
 	} else {
+		return;
 		$data = array_shift($data);
 		$current = $data['current'];
 		$percent = $data['percent'];
 		$chg = $data['chg'];
 		$low = $data['low'];
 		$high = $data['high'];
+		$name = CODE_MAP[$data['symbol']];
 		$timestamp = $data['timestamp'];
 		$timestamp = date('Y-m-d H:i:s', (int)($timestamp/1000));
-		$content = sprintf('现价%s，涨跌价%s，涨跌幅%s，最高%s，最低%s', $current, $chg, $percent, $high, $low);
+		$content = sprintf("%s 实时【%s】当前价%s，涨跌价%s，涨跌幅%s%%，最高%s，最低%s", date('Y-m-d'), $name, $current, $chg, $percent, $high, $low);
 	}
 	$content = assembleRequestData($content);
 	$request->post($content);
@@ -57,46 +70,188 @@
 	}
 
 	/**
-	 * 'symbol' =>
-	string(8) "SZ159937"
-	'current' =>
-	double(2.683)
-	'percent' =>
-	double(0.22)
-	'chg' =>
-	double(0.006)
-	'timestamp' =>
-	int(1527663843000)
-	'volume' =>
-	int(37120800)
-	'amount' =>
-	double(99654600)
-	'market_capital' =>
-	double(3767259283.07)
-	'float_market_capital' =>
-	NULL
-	'turnover_rate' =>
-	NULL
-	'amplitude' =>
-	double(0.22)
-	'high' =>
-	double(2.687)
-	'low' =>
-	double(2.681)
-	'avg_price' =>
-	double(2.685)
-	'trade_volume' =>
-	int(0)
-	'side' =>
-	int(1)
-	'is_trade' =>
-	bool(false)
-	'level' =>
-	int(1)
-	'trade_session' =>
-	NULL
-	'trade_type' =>
-	NULL
+	 * 实时接口
+	 * {
+	data: [
+	{
+	symbol: "SZ159937",
+	current: 2.684,
+	percent: 0.04,
+	chg: 0.001,
+	timestamp: 1527730374000,
+	volume: 23700,
+	amount: 63666,
+	market_capital: 3768663405.06,
+	float_market_capital: null,
+	turnover_rate: null,
+	amplitude: 0.19,
+	high: 2.689,
+	low: 2.684,
+	avg_price: 2.686,
+	trade_volume: 200,
+	side: 1,
+	is_trade: true,
+	level: 1,
+	trade_session: null,
+	trade_type: null,
+	}
+	],
+	error_code: 0,
+	error_description: null,
+	}
+	 */
+
+	/**
+	 * {
+	data: {
+	market: {
+	status_id: 1,
+	region: "CN",
+	status: "未开盘",
+	time_zone: "Asia/Shanghai",
+	},
+	quote: {
+	symbol: "SZ159937",
+	code: "159937",
+	exchange: "SZ",
+	name: "博时黄金",
+	type: 13,
+	sub_type: "19",
+	status: 1,
+	current: 2.683,
+	currency: "CNY",
+	percent: 0.22,
+	chg: 0.006,
+	timestamp: 1527663843000,
+	time: 1527663843000,
+	lot_size: 100,
+	tick_size: 0.001,
+	open: 2.686,
+	last_close: 2.677,
+	high: 2.687,
+	low: 2.681,
+	avg_price: 2.685,
+	volume: 37120800,
+	amount: 99654600.1,
+	turnover_rate: null,
+	amplitude: 0.22,
+	market_capital: 3767259283.07,
+	float_market_capital: null,
+	total_shares: 1404121984,
+	float_shares: null,
+	issue_date: 1409500800000,
+	lock_set: null,
+	},
+	others: {
+	pankou_ratio: -10.95
+	},
+	tags: [ ],
+	},
+	error_code: 0,
+	error_description: "",
+	}
+	 */
+
+	/**
+	 * {
+	data: {
+	market: {
+	status_id: 3,
+	region: "CN",
+	status: "集合竞价",
+	time_zone: "Asia/Shanghai",
+	},
+	quote: {
+	symbol: "SZ159937",
+	code: "159937",
+	exchange: "SZ",
+	name: "博时黄金",
+	type: 13,
+	sub_type: "19",
+	status: 1,
+	current: 2.695,
+	currency: "CNY",
+	percent: 0.45,
+	chg: 0.012,
+	timestamp: 1527729438000,
+	time: 1527729438000,
+	lot_size: 100,
+	tick_size: 0.001,
+	open: null,
+	last_close: 2.683,
+	high: null,
+	low: null,
+	avg_price: 2.695,
+	volume: 0,
+	amount: 0,
+	turnover_rate: null,
+	amplitude: null,
+	market_capital: 3784108746.88,
+	float_market_capital: null,
+	total_shares: 1404121984,
+	float_shares: null,
+	issue_date: 1409500800000,
+	lock_set: null,
+	},
+	others: {
+	pankou_ratio: -46.43
+	},
+	tags: [ ],
+	},
+	error_code: 0,
+	error_description: "",
+	}
+	 */
+
+	/**
+	 * {
+	data: {
+	market: {
+	status_id: 5,
+	region: "CN",
+	status: "交易中",
+	time_zone: "Asia/Shanghai",
+	},
+	quote: {
+	symbol: "SZ159937",
+	code: "159937",
+	exchange: "SZ",
+	name: "博时黄金",
+	type: 13,
+	sub_type: "19",
+	status: 1,
+	current: 2.687,
+	currency: "CNY",
+	percent: 0.15,
+	chg: 0.004,
+	timestamp: 1527730212000,
+	time: 1527730212000,
+	lot_size: 100,
+	tick_size: 0.001,
+	open: 2.689,
+	last_close: 2.683,
+	high: 2.689,
+	low: 2.687,
+	avg_price: 2.688,
+	volume: 8800,
+	amount: 23655,
+	turnover_rate: null,
+	amplitude: 0.07,
+	market_capital: 3772875771.01,
+	float_market_capital: null,
+	total_shares: 1404121984,
+	float_shares: null,
+	issue_date: 1409500800000,
+	lock_set: null,
+	},
+	others: {
+	pankou_ratio: -87.82
+	},
+	tags: [ ],
+	},
+	error_code: 0,
+	error_description: "",
+	}
 	 */
 
 	/**
